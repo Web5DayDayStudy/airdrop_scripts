@@ -8,16 +8,24 @@
 
 # 安装依赖
 pip3 install -r requirements.txt
-# 配置私钥
-在 private_keys.txt 中配置好私钥
+
 # 运行
-python checkin_executor.py
+## 签到
+1: 配置好checkin_private_keys.txt(一行一个) 
+
+2: python checkin_executor.py
+
+## 领取积分
+1: 配置好claim_private_keys.txt(一行一个) 
+
+2: python claim_executor.py
+
 # 查看结果
 去浏览器上看看成功没
 
 
 # Feature
 
+- [x] 领取积分
 - [ ] 邀请注册
-- [ ] 领取积分
 - [ ] 点赞回答
