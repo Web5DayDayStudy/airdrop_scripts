@@ -11,6 +11,7 @@ pip3 install -r requirements.txt
 
 # 运行
 ## 签到
+
 1: 配置好checkin_private_keys.txt(一行一个) 
 
 2: python checkin_executor.py
