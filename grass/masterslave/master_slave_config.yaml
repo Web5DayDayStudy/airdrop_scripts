@@ -1,0 +1,23 @@
+
+# 小号配置，会根据uid与proxy均匀绑定代理与uid，最好是uid=proxy
+slave:
+  # 你的uid
+  user_ids:
+
+  # 你的代理
+  socks5_proxys_simple:
+
+# 主号配置,主号会均匀分配配置的代理地址
+master:
+  # 你的uid
+  user_ids:
+
+  # 你的代理
+  socks5_proxys_simple:
+
+
+
+
+
+
+
