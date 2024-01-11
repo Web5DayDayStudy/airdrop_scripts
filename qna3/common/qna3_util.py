@@ -1,3 +1,5 @@
+import os
+
 from eth_account.messages import encode_defunct
 import requests
 import json
@@ -104,3 +106,16 @@ def check_and_reset_input_data(input_data):
         return '0x' + input_data.replace('0x', '')
     else:
         raise Exception("format input_data err")
+
+
+def parse_key_file(file_path):
+    if not os.path.exists(file_path):
+        logging.error(f"file '{file_path}' not found.")
+        exit(1)
+    with open(file_path, 'r') as file:
+        private_keys = file.readlines()
+
+    private_keys = [key.strip() for key in private_keys if key.strip()]
+    if len(private_keys) == 0:
+        raise Exception("no private keys")
+    return private_keys

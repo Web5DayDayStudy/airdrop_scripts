@@ -8,6 +8,7 @@ from qna3.common import qna3_util
 
 CONTRACT = "0xb342e7d33b806544609370271a8d074313b7bc30"
 
+
 def claim_point(private_key):
     # step1: 查询领取积分方法，查看我能领取多少分
     query_claim_point_url = "https://api.qna3.ai/api/v2/my/claim-all"
@@ -23,33 +24,40 @@ def claim_point(private_key):
         claim_response_data = query_claim_point_response.json()
         status_code = claim_response_data['statusCode']
         if status_code == 200:
-            nonce = claim_response_data['data']['signature']['nonce']
-            signature = claim_response_data['data']['signature']['signature']
-            amount = claim_response_data['data']['amount']
-            history_id = claim_response_data['data']['history_id']
+            data = claim_response_data.get("data")
+            if data:
+                nonce = data['signature']['nonce']
+                signature = data['signature']['signature']
+                amount = data['amount']
+                history_id = data['history_id']
         else:
-            raise Exception("query claim point info fail")
+            raise Exception("claim-all response is null, skip....")
     if nonce is None or amount is None or history_id is None or signature is None:
-        raise Exception(f"query point param fail, params is None. nonce: {nonce}, amount: {amount}, "
-                        f"history_id: {history_id}, signature: {signature}")
+        logging.error("====== no points available for redemption were found，skip task！=======")
+        return
 
     # step2：调用合约，领取积分
     # 签名数据
     web3 = Web3(Web3.HTTPProvider('https://binance.llamarpc.com'))
     chain_id = web3.eth.chain_id
-    # nonce = web3.eth.get_transaction_count(Web3.to_checksum_address(address))
     input_data = qna3_util.check_and_reset_input_data(build_input_data(amount, nonce, signature))
-    tx_id = qna3_util.exec_tx(address, CONTRACT, input_data, nonce, chain_id, private_key, web3)
+    tx_nonce = web3.eth.get_transaction_count(Web3.to_checksum_address(address))
+    tx_id = qna3_util.exec_tx(address, CONTRACT, input_data, tx_nonce, chain_id, private_key, web3)
+
     # step3：上报合约领取积分成功
     report_claim_point_url = f"https://api.qna3.ai/api/v2/my/claim/{history_id}"
-    report_claim_point_response = requests.post(report_claim_point_url, headers=headers)
+    body = {
+        "hash": tx_id
+    }
+    report_claim_point_response = requests.put(report_claim_point_url, headers=headers,
+                                               data=json.dumps(body))
     report_point_json = report_claim_point_response.json()
     logging.info(f'exec claim point successful, json : {report_point_json}')
-    if report_claim_point_response.status_code == 200 or report_claim_point_response.status_code == 201:
+    if report_claim_point_response.status_code in [200, 201]:
         if report_point_json["statusCode"] == 200:
-            logging.info(f'report claim point successful')
-        else:
-            raise Exception("report claim point fail")
+            logging.info(f'claim point successful')
+    else:
+        raise Exception("claim point fail")
     return address, private_key, tx_id
 
 
@@ -71,7 +79,4 @@ def build_input_data(amount, nonce, signature):
 
 
 if __name__ == '__main__':
-    web3 = Web3(Web3.HTTPProvider('https://binance.llamarpc.com'))
-    tx = web3.eth.get_transaction("")
-    print(json.dumps(tx))
-    #claim_point("")
+    claim_point("0x124eac5a291686d2f9e487daf634d3f26f66e2fe7762bdd1e0d182312a5591e0")

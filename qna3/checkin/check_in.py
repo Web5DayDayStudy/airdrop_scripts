@@ -16,17 +16,11 @@ INPUT_DATA = "0xe95a644f00000000000000000000000000000000000000000000000000000000
 
 # 签到
 def do_check_in(private_key):
-    logging.info(f'======================= start sign privateKey in : {private_key} ============================')
+    logging.info(f'======================= start check in privateKey in : {private_key} ============================')
 
     # step1，构造公共请求头
     web3 = Web3(Web3.WebsocketProvider('wss://opbnb.publicnode.com'))
     address, headers = get_base_info(private_key)
-
-    # me_req_url = 'https://api.qna3.ai/user/me'
-    # me_response = requests.get(me_req_url, headers=headers)
-    # if me_response.status_code in [200, 201]:
-    #     me_response_data = me_response.json()
-    #     logging.info(f'req get me successful, json : {me_response_data}')
 
     # step2. 交互合约签到，返回txId
     chain_id = web3.eth.chain_id
@@ -46,9 +40,9 @@ def report_point(headers, tx_hash_id):
         'via': 'opbnb'
     }), headers=headers)
     if check_sign_response.status_code in [200, 201]:
-        logging.info(f'req check signIn successful, json : {check_sign_response.json()}')
+        logging.info(f'req check in successful, json : {check_sign_response.json()}')
     else:
-        logging.error(f'sign fail, response : {check_sign_response.json()}')
+        logging.error(f'req check in fail, response : {check_sign_response.json()}')
 
 
 
