@@ -17,7 +17,10 @@ class MaterSlaveConfig:
                 arr = proxy_str.split('|')
                 if len(arr) < 4:
                     continue
-                ip, port, username, pwd = arr
+                ip = arr[0]
+                port = arr[1]
+                username = arr[2]
+                pwd = arr[3]
                 tmp_socks5_proxys.append(f'socks5://{username}:{pwd}@{ip}:{port}')
             self.socks5_proxys = tmp_socks5_proxys
         else:
