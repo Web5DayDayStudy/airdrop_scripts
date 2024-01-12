@@ -79,4 +79,4 @@ def build_input_data(amount, nonce, signature):
 
 
 if __name__ == '__main__':
-    claim_point("0x124eac5a291686d2f9e487daf634d3f26f66e2fe7762bdd1e0d182312a5591e0")
+    claim_point("")
