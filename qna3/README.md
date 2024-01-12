@@ -21,6 +21,8 @@ pip3 install -r requirements.txt
 ip|port|username|password
 ip|port|username|password
 ```
+
+4: 配置invite_config.yaml 邀请人，如果需要的话。
 ## 签到
 
 python checkin_executor.py
