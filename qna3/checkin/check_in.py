@@ -6,6 +6,7 @@ import json
 import logging
 
 from qna3.common import qna3_util
+from qna3.common.proxy_pool import ProxyPoolManager
 from qna3.common.qna3_util import get_base_info
 
 logging.basicConfig(level=logging.INFO)
@@ -15,12 +16,12 @@ INPUT_DATA = "0xe95a644f00000000000000000000000000000000000000000000000000000000
 
 
 # 签到
-def do_check_in(private_key):
+def do_check_in(proxy_manager: ProxyPoolManager, trak_id: str, private_key: str):
     logging.info(f'======================= start check in privateKey in : {private_key} ============================')
 
     # step1，构造公共请求头
     web3 = Web3(Web3.WebsocketProvider('wss://opbnb.publicnode.com'))
-    address, headers = get_base_info(private_key)
+    address, headers = get_base_info(proxy_manager, trak_id, private_key)
 
     # step2. 交互合约签到，返回txId
     chain_id = web3.eth.chain_id
@@ -28,14 +29,14 @@ def do_check_in(private_key):
     tx_hash_id = qna3_util.exec_tx(address, CONTRACT, INPUT_DATA, nonce, chain_id, private_key, web3)
 
     # step3. 上报得分
-    report_point(headers, tx_hash_id)
+    report_point(proxy_manager, trak_id, headers, tx_hash_id)
 
     return [address, tx_hash_id, private_key]
 
 
 # 上报得分
-def report_point(headers, tx_hash_id):
-    check_sign_response = requests.post('https://api.qna3.ai/api/v2/my/check-in', data=json.dumps({
+def report_point(proxy_manager: ProxyPoolManager, trak_id: str, headers: dict, tx_hash_id):
+    check_sign_response = proxy_manager.post('https://api.qna3.ai/api/v2/my/check-in', trak_id, data=json.dumps({
         'hash': tx_hash_id,
         'via': 'opbnb'
     }), headers=headers)
@@ -43,6 +44,3 @@ def report_point(headers, tx_hash_id):
         logging.info(f'req check in successful, json : {check_sign_response.json()}')
     else:
         logging.error(f'req check in fail, response : {check_sign_response.json()}')
-
-
-

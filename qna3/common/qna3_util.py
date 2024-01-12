@@ -8,10 +8,12 @@ import time
 
 from web3 import Web3
 
+from qna3.common.proxy_pool import ProxyPoolManager
+
 logging.basicConfig(level=logging.INFO)
 
 
-def get_base_info(private_key):
+def get_base_info(proxy_manager: ProxyPoolManager, trak_id, private_key):
     message = encode_defunct(text="AI + DYOR = Ultimate Answer to Unlock Web3 Universe")
     web3 = Web3(Web3.WebsocketProvider('wss://opbnb.publicnode.com'))
     account = web3.eth.account
@@ -32,9 +34,10 @@ def get_base_info(private_key):
     }
     access_token = ''
     user_id = ''
-    auth_response = requests.post('https://api.qna3.ai/api/v2/auth/login?via=wallet',
-                                  data=json.dumps(access_token_data),
-                                  headers=headers)
+    auth_response = proxy_manager.post('https://api.qna3.ai/api/v2/auth/login?via=wallet',
+                                       trak_id,
+                                       data=json.dumps(access_token_data),
+                                       headers=headers)
     if auth_response.status_code in [200, 201]:
         auth_response_data = auth_response.json()
         logging.info(f'req auth successful, json : {auth_response_data}')
@@ -108,14 +111,14 @@ def check_and_reset_input_data(input_data):
         raise Exception("format input_data err")
 
 
-def parse_key_file(file_path):
+def parse_txt_file(file_path):
     if not os.path.exists(file_path):
         logging.error(f"file '{file_path}' not found.")
         exit(1)
     with open(file_path, 'r') as file:
-        private_keys = file.readlines()
+        datas = file.readlines()
 
-    private_keys = [key.strip() for key in private_keys if key.strip()]
-    if len(private_keys) == 0:
-        raise Exception("no private keys")
-    return private_keys
+    datas = [data.strip() for data in datas if data.strip()]
+    if len(datas) == 0:
+        raise Exception("file data not found.")
+    return datas

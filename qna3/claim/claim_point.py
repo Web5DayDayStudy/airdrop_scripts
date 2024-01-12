@@ -5,15 +5,16 @@ import requests
 from web3 import Web3
 
 from qna3.common import qna3_util
+from qna3.common.proxy_pool import ProxyPoolManager
 
 CONTRACT = "0xb342e7d33b806544609370271a8d074313b7bc30"
 
 
-def claim_point(private_key):
+def claim_point(proxy_manager: ProxyPoolManager, trak_id: str, private_key: str):
     # step1: 查询领取积分方法，查看我能领取多少分
     query_claim_point_url = "https://api.qna3.ai/api/v2/my/claim-all"
-    address, headers = qna3_util.get_base_info(private_key)
-    query_claim_point_response = requests.post(query_claim_point_url, headers=headers)
+    address, headers = qna3_util.get_base_info(proxy_manager, trak_id, private_key)
+    query_claim_point_response = proxy_manager.post(url=query_claim_point_url, trak_id=trak_id, headers=headers)
     logging.info(f'query claim point successful, json : {query_claim_point_response.json()}')
 
     nonce = None
@@ -49,8 +50,8 @@ def claim_point(private_key):
     body = {
         "hash": tx_id
     }
-    report_claim_point_response = requests.put(report_claim_point_url, headers=headers,
-                                               data=json.dumps(body))
+    report_claim_point_response = proxy_manager.put(url=report_claim_point_url, trak_id=trak_id, data=json.dumps(body),
+                                                    headers=headers)
     report_point_json = report_claim_point_response.json()
     logging.info(f'exec claim point successful, json : {report_point_json}')
     if report_claim_point_response.status_code in [200, 201]:
