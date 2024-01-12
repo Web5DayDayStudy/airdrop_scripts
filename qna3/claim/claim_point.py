@@ -5,7 +5,7 @@ import requests
 from web3 import Web3
 
 from qna3.common import qna3_util
-from qna3.common.proxy_pool import ProxyPoolManager
+from qna3.common.proxy_manager import ProxyPoolManager
 
 CONTRACT = "0xb342e7d33b806544609370271a8d074313b7bc30"
 

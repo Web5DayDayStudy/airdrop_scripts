@@ -4,7 +4,7 @@ import check_in
 import logging
 
 from qna3.common import qna3_util
-from qna3.common.proxy_pool import ProxyPoolManager
+from qna3.common.proxy_manager import ProxyPoolManager
 
 logging.basicConfig(level=logging.DEBUG)
 

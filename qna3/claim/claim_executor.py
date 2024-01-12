@@ -3,7 +3,7 @@ import uuid
 
 from qna3.claim import claim_point
 from qna3.common import qna3_util
-from qna3.common.proxy_pool import ProxyPoolManager
+from qna3.common.proxy_manager import ProxyPoolManager
 
 logging.basicConfig(level=logging.DEBUG)
 

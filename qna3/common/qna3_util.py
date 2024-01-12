@@ -8,7 +8,7 @@ import time
 
 from web3 import Web3
 
-from qna3.common.proxy_pool import ProxyPoolManager
+from qna3.common.proxy_manager import ProxyPoolManager
 
 logging.basicConfig(level=logging.INFO)
 

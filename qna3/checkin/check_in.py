@@ -6,7 +6,7 @@ import json
 import logging
 
 from qna3.common import qna3_util
-from qna3.common.proxy_pool import ProxyPoolManager
+from qna3.common.proxy_manager import ProxyPoolManager
 from qna3.common.qna3_util import get_base_info
 
 logging.basicConfig(level=logging.INFO)
