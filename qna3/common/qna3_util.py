@@ -1,7 +1,6 @@
 import os
 
 from eth_account.messages import encode_defunct
-import requests
 import json
 import logging
 import time
@@ -13,7 +12,7 @@ from qna3.common.proxy_manager import ProxyPoolManager
 logging.basicConfig(level=logging.INFO)
 
 
-def get_base_info(proxy_manager: ProxyPoolManager, trak_id, private_key):
+def get_base_info(proxy_manager: ProxyPoolManager, trak_id: str, private_key, invite_code: str = None):
     message = encode_defunct(text="AI + DYOR = Ultimate Answer to Unlock Web3 Universe")
     web3 = Web3(Web3.WebsocketProvider('wss://opbnb.publicnode.com'))
     account = web3.eth.account
@@ -26,6 +25,10 @@ def get_base_info(proxy_manager: ProxyPoolManager, trak_id, private_key):
         'signature': signature_hex,
         'wallet_address': address
     }
+    # 如果有邀请码，就填充邀请码
+    if invite_code:
+        access_token_data['invite_code'] = invite_code
+
     headers = {
         'Content-Type': 'application/json; charset=utf-8',
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -43,10 +46,11 @@ def get_base_info(proxy_manager: ProxyPoolManager, trak_id, private_key):
         logging.info(f'req auth successful, json : {auth_response_data}')
         access_token = auth_response_data['data']['accessToken']
         user_id = auth_response_data['data']['user']['id']
+        invite_code = auth_response_data['data']['user']['invite_code']
     # step3. get me info
     headers['Authorization'] = 'Bearer ' + access_token
     headers['X-Id'] = user_id
-    return address, headers
+    return address, headers, invite_code
 
 
 # 执行签到合约交互

@@ -1,7 +1,4 @@
-import time
-
 from web3 import Web3
-import requests
 import json
 import logging
 
@@ -21,7 +18,7 @@ def do_check_in(proxy_manager: ProxyPoolManager, trak_id: str, private_key: str)
 
     # step1，构造公共请求头
     web3 = Web3(Web3.WebsocketProvider('wss://opbnb.publicnode.com'))
-    address, headers = get_base_info(proxy_manager, trak_id, private_key)
+    address, headers, _ = get_base_info(proxy_manager=proxy_manager, trak_id=trak_id, private_key=private_key)
 
     # step2. 交互合约签到，返回txId
     chain_id = web3.eth.chain_id

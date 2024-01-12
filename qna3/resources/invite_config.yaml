@@ -1,0 +1,10 @@
+# 邀请用户配置
+invite:
+  infos:
+    -
+      invite_private_key: xx # 邀请人私钥
+      # 接受邀请人私钥，建议20个，因为邀请上限是20，多了好像领取不到多的邀请分了
+      accept_private_keys:
+        - xx
+        - xx
+        - xx

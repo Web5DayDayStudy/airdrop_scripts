@@ -29,12 +29,15 @@ python checkin_executor.py
 
 python claim_executor.py
 
+## 邀请人
+python invite_manager.py
+
 # 查看结果
 去浏览器上看看成功没
 
 
 # Feature
-
+- [x] 签到
 - [x] 领取积分
-- [ ] 邀请注册
+- [x] 邀请注册
 - [ ] 点赞回答

@@ -14,6 +14,10 @@ logging.basicConfig(level=logging.INFO)
 
 class ProxyPoolManager:
     def __init__(self):
+        """
+
+        :rtype: object
+        """
         proxy_list = []
         tmp_proxies = qna3_util.parse_txt_file("../resources/socks5_proxys.txt")
         # 解析成正确结构
@@ -107,12 +111,11 @@ class ProxyPoolManager:
             return self.session_exec(trak_id, url, "delete", data, headers)
         return self.exec(url, "delete", data, headers)
 
-
-if __name__ == '__main__':
-    proxy_manager = ProxyPoolManager()
-    for _ in range(3):
-        response = proxy_manager.get(trak_id=1, url='https://www.baidu.com')
-        if response:
-            print(response.status_code)
-        else:
-            print("请求失败")
+# if __name__ == '__main__':
+#     proxy_manager = ProxyPoolManager()
+#     for _ in range(3):
+#         response = proxy_manager.get(trak_id=1, url='https://www.baidu.com')
+#         if response:
+#             print(response.status_code)
+#         else:
+#             print("请求失败")
