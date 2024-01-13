@@ -1,7 +1,13 @@
 from web3 import Web3
 import json
 import logging
-
+#########################################################
+#将根目录加入sys.path中,解决命令行找不到包的问题
+import sys
+import os
+curPath = os.path.dirname(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
+sys.path.append(curPath)
+#########################################################
 from qna3.common import qna3_util
 from qna3.common.proxy_manager import ProxyPoolManager
 from qna3.common.qna3_util import get_base_info

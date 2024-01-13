@@ -1,6 +1,12 @@
 import itertools
 import random
-import uuid
+#########################################################
+#将根目录加入sys.path中,解决命令行找不到包的问题
+import sys
+import os
+curPath = os.path.dirname(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
+sys.path.append(curPath)
+#########################################################
 
 import requests
 import logging
@@ -19,7 +25,10 @@ class ProxyPoolManager:
         :rtype: object
         """
         proxy_list = []
-        tmp_proxies = qna3_util.parse_txt_file("../resources/socks5_proxys.txt")
+        file_path = os.path.join(curPath, 'qna3', 'resources', 'socks5_proxys.txt')
+        abs_file_path = os.path.abspath(file_path)
+        proxys = qna3_util.parse_txt_file(abs_file_path)
+        tmp_proxies = qna3_util.parse_txt_file(proxys)
         # 解析成正确结构
         for proxy_str in tmp_proxies:
             arr = proxy_str.split('|')
@@ -111,11 +120,11 @@ class ProxyPoolManager:
             return self.session_exec(trak_id, url, "delete", data, headers)
         return self.exec(url, "delete", data, headers)
 
-# if __name__ == '__main__':
-#     proxy_manager = ProxyPoolManager()
-#     for _ in range(3):
-#         response = proxy_manager.get(trak_id=1, url='https://www.baidu.com')
-#         if response:
-#             print(response.status_code)
-#         else:
-#             print("请求失败")
+if __name__ == '__main__':
+    proxy_manager = ProxyPoolManager()
+    for _ in range(3):
+        response = proxy_manager.get(trak_id=1, url='https://www.baidu.com')
+        if response:
+            print(response.status_code)
+        else:
+            print("请求失败")

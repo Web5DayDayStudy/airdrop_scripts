@@ -1,5 +1,10 @@
+#########################################################
+#将根目录加入sys.path中,解决命令行找不到包的问题
+import sys
 import os
-
+curPath = os.path.dirname(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
+sys.path.append(curPath)
+#########################################################
 from eth_account.messages import encode_defunct
 import json
 import logging

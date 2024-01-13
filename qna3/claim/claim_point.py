@@ -1,6 +1,12 @@
 import json
 import logging
-
+#########################################################
+#将根目录加入sys.path中,解决命令行找不到包的问题
+import sys
+import os
+curPath = os.path.dirname(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
+sys.path.append(curPath)
+#########################################################
 from web3 import Web3
 
 from qna3.common import qna3_util
@@ -79,4 +85,4 @@ def build_input_data(amount, nonce, signature):
 
 
 if __name__ == '__main__':
-    claim_point("")
+    print()

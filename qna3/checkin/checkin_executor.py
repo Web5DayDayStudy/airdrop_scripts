@@ -2,13 +2,22 @@ import uuid
 
 import check_in
 import logging
-
+#########################################################
+#将根目录加入sys.path中,解决命令行找不到包的问题
+import sys
+import os
+curPath = os.path.dirname(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
+sys.path.append(curPath)
+#########################################################
 from qna3.common import qna3_util
 from qna3.common.proxy_manager import ProxyPoolManager
 
+
 logging.basicConfig(level=logging.DEBUG)
 
-private_keys = qna3_util.parse_txt_file("../resources/checkin_private_keys.txt")
+file_path = os.path.join(curPath, 'qna3', 'resources', 'checkin_private_keys.txt')
+abs_file_path = os.path.abspath(file_path)
+private_keys = qna3_util.parse_txt_file(abs_file_path)
 proxy_manager = ProxyPoolManager()
 
 for private_key in private_keys:
@@ -29,4 +38,4 @@ logging.info(" ALL EXEC SUCCESSFUL !")
 
 
 if __name__ == '__main__':
-    print(str(uuid.uuid4()))
+    print()

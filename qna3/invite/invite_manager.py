@@ -1,15 +1,26 @@
 import logging
 import uuid
 import yaml
+#########################################################
+# 将根目录加入sys.path中,解决命令行找不到包的问题
+import sys
+import os
 
+curPath = os.path.dirname(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
+sys.path.append(curPath)
+#########################################################
 from qna3.common import qna3_util
 from qna3.common.proxy_manager import ProxyPoolManager
 
 logging.basicConfig(level=logging.INFO)
 
+file_path = os.path.join(curPath, 'qna3', 'resources', 'invite_config.txt')
+abs_file_path = os.path.abspath(file_path)
+invite_config = qna3_util.parse_txt_file(abs_file_path)
+
 
 class InviteManager:
-    def __init__(self, config_path='../resources/invite_config.yaml'):
+    def __init__(self, config_path=invite_config):
         self.config_path = config_path
         self.proxy = ProxyPoolManager()
 
