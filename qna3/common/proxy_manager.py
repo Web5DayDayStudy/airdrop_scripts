@@ -27,8 +27,7 @@ class ProxyPoolManager:
         proxy_list = []
         file_path = os.path.join(curPath, 'qna3', 'resources', 'socks5_proxys.txt')
         abs_file_path = os.path.abspath(file_path)
-        proxys = qna3_util.parse_txt_file(abs_file_path)
-        tmp_proxies = qna3_util.parse_txt_file(proxys)
+        tmp_proxies = qna3_util.parse_txt_file(abs_file_path)
         # 解析成正确结构
         for proxy_str in tmp_proxies:
             arr = proxy_str.split('|')
