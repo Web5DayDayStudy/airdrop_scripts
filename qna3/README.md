@@ -22,7 +22,7 @@ ip|port|username|password
 ip|port|username|password
 ```
 
-4: 配置invite_config.yaml 邀请人，如果需要的话。
+4: 配置invite_config.yaml(注意配置私钥得时候用引号引起来，否则会被当成数字解析) 邀请人，如果需要的话。
 ## 签到
 
 python checkin_executor.py
