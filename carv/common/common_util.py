@@ -1,7 +1,8 @@
 #########################################################
-#将根目录加入sys.path中,解决命令行找不到包的问题
+# 将根目录加入sys.path中,解决命令行找不到包的问题
 import sys
 import os
+
 curPath = os.path.dirname(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 sys.path.append(curPath)
 #########################################################
@@ -18,7 +19,9 @@ from eth_account.messages import encode_defunct
 from web3 import Web3
 
 
-class CommonUtil():
+class CommonUtil:
+    _data_cache = {}
+
     @staticmethod
     def exec_tx(_from, contract, input_data, nonce, chain_id, private_key, web3):
         contract_address = Web3.to_checksum_address(contract)
@@ -88,13 +91,30 @@ class CommonUtil():
         if not os.path.exists(file_path):
             logging.error(f"file '{file_path}' not found.")
             exit(1)
-        with open(file_path, 'r') as file:
+        with open(file_path, 'r', encoding='utf-8') as file:
             datas = file.readlines()
 
         datas = [data.strip() for data in datas if data.strip()]
         if len(datas) == 0:
             raise Exception("file data not found.")
         return datas
+
+    @staticmethod
+    def parse_json_file(key, file_path):
+        # 检查这个key对应的数据是否已经加载
+        if key in CommonUtil._data_cache:
+            return CommonUtil._data_cache[key]
+
+        # 检查文件是否存在
+        if not os.path.exists(file_path):
+            logging.error(f"File '{file_path}' not found.")
+            exit(1)
+
+        # 加载文件数据
+        with open(file_path, 'r', encoding='utf-8') as file:
+            CommonUtil._data_cache[key] = json.load(file)
+
+        return CommonUtil._data_cache[key]
 
     @staticmethod
     def login(proxy, trak_id: str, private_key: str, chain_url: str):
@@ -268,4 +288,4 @@ class ProxyPoolManager:
 
 if __name__ == '__main__':
     print()
-   # ProxyPoolManager()
+# ProxyPoolManager()

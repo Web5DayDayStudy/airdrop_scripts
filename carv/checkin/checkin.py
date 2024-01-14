@@ -53,23 +53,25 @@ def check_status(proxy: ProxyPoolManager, trak_id: str, chain_id: str, headers: 
 # 0xa2a9539c - functionName
 # 00000000000000000000000004babbd2cb77bc47ff32a78396d70bb33d26dbf3 - 钱包地址
 # 0000000000000000000000000000000000000000000000000000000000000032 - 金额
-# 000000000000000000000000000000000000000000000000000000000134d6f0 - 固定
+# 000000000000000000000000000000000000000000000000000000000134d6f0 - 动态变化的，目前看来是每天+1
 # 0000000000000000000000000000000000000000000000000000000000000080 - 固定
 # 0000000000000000000000000000000000000000000000000000000000000041 - 固定
 # 550dd7a34150c3d9d4a9948a5001214906eb0854c85dcf2acae85a5debd04bd67f174e358552c47008524b0fba693d1537700b6f1b877acf2a58197d20eb0d0f1c - 签名
 # 00000000000000000000000000000000000000000000000000000000000000 - 固定
-def build_input_data(amount, address, signature):
+
+def build_input_data(amount, address, signature, dynamic_hex):
+    # 获取今天的动态部分
     return ("0xa2a9539c"
             f"{address[2:].zfill(64)}"
             f"{f'{hex(amount)[2:].zfill(64)}'}"
-            f"000000000000000000000000000000000000000000000000000000000134d6f1"
+            f"{dynamic_hex}"
             f"0000000000000000000000000000000000000000000000000000000000000080"
             f"0000000000000000000000000000000000000000000000000000000000000041"
             f"{signature}"
             f"00000000000000000000000000000000000000000000000000000000000000")
 
 
-def checkin_carv_soul(proxy: ProxyPoolManager, trak_id: str, chain_info: dict, private_key: str):
+def checkin_carv_soul(proxy: ProxyPoolManager, trak_id: str, chain_info: dict, private_key: str, dynamic_hex: str):
     chain_id = chain_info.get("id")
     chain_url = chain_info.get("url")
 
@@ -105,7 +107,7 @@ def checkin_carv_soul(proxy: ProxyPoolManager, trak_id: str, chain_info: dict, p
         raise Exception("signature and amount can't be None")
 
     input_data = CommonUtil().check_and_reset_input_data(build_input_data(amount=amount, signature=signature,
-                                                                          address=address))
+                                                                          address=address, dynamic_hex=dynamic_hex))
     web3 = Web3(Web3.HTTPProvider(chain_info.get("url")))
     temp_address = Web3.to_checksum_address(address)
     nonce = web3.eth.get_transaction_count(temp_address)
@@ -117,7 +119,7 @@ def checkin_carv_soul(proxy: ProxyPoolManager, trak_id: str, chain_info: dict, p
     return address, tx_hash_id, private_key
 
 
-def checkin_all(proxy: ProxyPoolManager, trak_id: str, private_key: str):
+def checkin_all(proxy: ProxyPoolManager, trak_id: str, private_key: str, dynamic_hex: str):
     logging.info(
         f" ========================================= 开始签到： privateKey {private_key} ========================================= ")
     logging.info(f" ")
@@ -125,7 +127,7 @@ def checkin_all(proxy: ProxyPoolManager, trak_id: str, private_key: str):
     logging.info(f" ")
     for china_info in chain_arr:
         address, tx_hash_id, _private_key = checkin_carv_soul(proxy=proxy, trak_id=trak_id, chain_info=china_info,
-                                                              private_key=private_key)
+                                                              private_key=private_key, dynamic_hex=dynamic_hex)
         logging.info(
             f">>>>>>>>>> address: {address} chinaName: {china_info.get('name')}, tx: {tx_hash_id} checkin successful <<<<<<<<<<<<<")
     logging.info(f" ")
