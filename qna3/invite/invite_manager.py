@@ -14,18 +14,17 @@ from qna3.common.proxy_manager import ProxyPoolManager
 
 logging.basicConfig(level=logging.INFO)
 
-file_path = os.path.join(curPath, 'qna3', 'resources', 'invite_config.txt')
+file_path = os.path.join(curPath, 'qna3', 'resources', 'invite_config.yaml')
 abs_file_path = os.path.abspath(file_path)
-invite_config = qna3_util.parse_txt_file(abs_file_path)
 
 
 class InviteManager:
-    def __init__(self, config_path=invite_config):
+    def __init__(self, config_path=abs_file_path):
         self.config_path = config_path
         self.proxy = ProxyPoolManager()
 
     def get_config_data(self):
-        with open(self.config_path, 'r') as file:
+        with open(self.config_path, 'r', encoding='utf-8') as file:
             return yaml.safe_load(file)
 
     def invite(self):

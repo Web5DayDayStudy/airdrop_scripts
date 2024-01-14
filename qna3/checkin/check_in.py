@@ -2,9 +2,10 @@ from web3 import Web3
 import json
 import logging
 #########################################################
-#将根目录加入sys.path中,解决命令行找不到包的问题
+# 将根目录加入sys.path中,解决命令行找不到包的问题
 import sys
 import os
+
 curPath = os.path.dirname(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 sys.path.append(curPath)
 #########################################################
@@ -16,6 +17,15 @@ logging.basicConfig(level=logging.INFO)
 
 CONTRACT = "0xb342e7d33b806544609370271a8d074313b7bc30"
 INPUT_DATA = "0xe95a644f0000000000000000000000000000000000000000000000000000000000000001"
+
+
+def retry_check_in(proxy_manager: ProxyPoolManager, trak_id: str, private_key: str):
+    return qna3_util.retry_operation_with_logging(
+        function=do_check_in,
+        proxy_manager=proxy_manager,
+        trak_id=trak_id,
+        private_key=private_key
+    )
 
 
 # 签到

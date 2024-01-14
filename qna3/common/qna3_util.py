@@ -1,7 +1,8 @@
 #########################################################
-#将根目录加入sys.path中,解决命令行找不到包的问题
+# 将根目录加入sys.path中,解决命令行找不到包的问题
 import sys
 import os
+
 curPath = os.path.dirname(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 sys.path.append(curPath)
 #########################################################
@@ -124,10 +125,38 @@ def parse_txt_file(file_path):
     if not os.path.exists(file_path):
         logging.error(f"file '{file_path}' not found.")
         exit(1)
-    with open(file_path, 'r') as file:
+    with open(file_path, 'r', encoding='utf-8') as file:
         datas = file.readlines()
 
     datas = [data.strip() for data in datas if data.strip()]
     if len(datas) == 0:
         raise Exception("file data not found.")
     return datas
+
+
+max_retries = 3
+retry_delay = 5
+
+
+def retry_operation_with_logging(function, **kwargs):
+    retries = 0
+    while retries < max_retries:
+        try:
+            return function(**kwargs)
+        except Exception as e:
+            logging.error(f"尝试 {retries + 1} 失败，错误: {e}")
+            time.sleep(retry_delay)
+            retries += 1
+
+    # 如果达到最大重试次数仍然失败，记录失败的 privateKey
+    logging.error(f"操作在 {max_retries} 次尝试后失败。")
+    if 'private_key' in kwargs:
+        log_failed_private_key(kwargs['private_key'])
+    raise
+
+
+def log_failed_private_key(private_key):
+    current_dir = os.path.dirname(os.path.realpath(__file__))
+    failed_keys_file = os.path.join(current_dir, 'failed_private_keys.txt')
+    with open(failed_keys_file, 'a') as file:
+        file.write(f"{private_key}\n")
