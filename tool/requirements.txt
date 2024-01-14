@@ -1,0 +1,4 @@
+binance-connector
+python-dotenv
+eth-account==0.9.0
+openpyxl==3.1.0
