@@ -155,6 +155,7 @@ def retry_operation_with_logging(function, **kwargs):
     raise
 
 
+
 def log_failed_private_key(private_key):
     current_dir = os.path.dirname(os.path.realpath(__file__))
     failed_keys_file = os.path.join(current_dir, 'failed_private_keys.txt')
