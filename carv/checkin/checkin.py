@@ -3,6 +3,7 @@ import json
 import logging
 
 from carv.common.common_util import CommonUtil, ProxyPoolManager
+from carv.common.annotation import retry, capture_error, to_async
 
 # ronin，opbnb，zkSync，linea
 chain_arr = [
@@ -18,12 +19,12 @@ chain_arr = [
         "contract": "0xc32338e7f84f4c01864c1d5b2b0c0c7c697c25dc",
         "name": "opBNB"
     },
-    {
-        "id": 324,
-        "url": "https://mainnet.era.zksync.io",
-        "contract": "0x5155704bb41fde152ad3e1ae402e8e8b9ba335d3",
-        "name": "zkSync Era"
-    },
+    # {
+    #     "id": 324,
+    #     "url": "https://mainnet.era.zksync.io",
+    #     "contract": "0x5155704bb41fde152ad3e1ae402e8e8b9ba335d3",
+    #     "name": "zkSync Era"
+    # },
     # {
     #     "id": 59144,
     #     "url": "https://binance.llamarpc.com",
@@ -41,10 +42,10 @@ def check_status(proxy: ProxyPoolManager, trak_id: str, chain_id: str, headers: 
     resp = proxy.get(url=url, trak_id=trak_id, headers=headers)
     if resp.status_code in [200, 201]:
         data = resp.json()
-        logging.info(f'req check_status successful, resp : {data}')
+        # logging.info(f'req check_status successful, resp : {data}')
         if data['code'] == 0 and data['data']['status'] == 'not_started':
             return True
-        logging.error(f'chain_id  already checked in')
+        logging.error(f'链ID：{chain_id} 已经签到')
         return False
 
 
@@ -59,6 +60,7 @@ def check_status(proxy: ProxyPoolManager, trak_id: str, chain_id: str, headers: 
 # 550dd7a34150c3d9d4a9948a5001214906eb0854c85dcf2acae85a5debd04bd67f174e358552c47008524b0fba693d1537700b6f1b877acf2a58197d20eb0d0f1c - 签名
 # 00000000000000000000000000000000000000000000000000000000000000 - 固定
 
+
 def build_input_data(amount, address, signature, dynamic_hex):
     # 获取今天的动态部分
     return ("0xa2a9539c"
@@ -71,12 +73,10 @@ def build_input_data(amount, address, signature, dynamic_hex):
             f"00000000000000000000000000000000000000000000000000000000000000")
 
 
-def checkin_carv_soul(proxy: ProxyPoolManager, trak_id: str, chain_info: dict, private_key: str, dynamic_hex: str):
+@retry(delay_between_attempts=3)
+def checkin_carv_soul(proxy: ProxyPoolManager, trak_id: str, chain_info: dict, private_key: str, dynamic_hex: str,
+                      address, headers):
     chain_id = chain_info.get("id")
-    chain_url = chain_info.get("url")
-
-    address, headers = CommonUtil().login_with_retry(proxy=proxy, trak_id=trak_id, private_key=private_key,
-                                                     chain_url=chain_url)
 
     # 检查是否能领取
     can_checkin = check_status(proxy=proxy, trak_id=trak_id, chain_id=chain_id, headers=headers)
@@ -94,7 +94,6 @@ def checkin_carv_soul(proxy: ProxyPoolManager, trak_id: str, chain_info: dict, p
     signature = None
     if resp.status_code in [200, 201]:
         json_data = resp.json()
-        logging.info(f'get carv soul successful, json : {json_data}')
         amount = json_data.get("data").get("permit").get("amount")
         signature = json_data.get("data").get("signature")
 
@@ -119,15 +118,22 @@ def checkin_carv_soul(proxy: ProxyPoolManager, trak_id: str, chain_info: dict, p
     return address, tx_hash_id, private_key
 
 
+@to_async(max_workers=2)
+@capture_error(error_type="carv-ceckin")
 def checkin_all(proxy: ProxyPoolManager, trak_id: str, private_key: str, dynamic_hex: str):
     logging.info(
         f" ========================================= 开始签到： privateKey {private_key} ========================================= ")
     logging.info(f" ")
     logging.info(f" ")
     logging.info(f" ")
+    # 登录放到外边，不然循环登录没必要
+    address, headers = CommonUtil().login_with_retry(proxy=proxy, trak_id=trak_id, private_key=private_key,
+                                                     chain_url="https://opbnb-mainnet-rpc.bnbchain.org")
+    logging.info(f">>>>>>>>>>> 完成登录 privateKey: {private_key}， address: {address}")
     for china_info in chain_arr:
         address, tx_hash_id, _private_key = checkin_carv_soul(proxy=proxy, trak_id=trak_id, chain_info=china_info,
-                                                              private_key=private_key, dynamic_hex=dynamic_hex)
+                                                              private_key=private_key, dynamic_hex=dynamic_hex,
+                                                              address=address, headers=headers)
         logging.info(
             f">>>>>>>>>> address: {address} chinaName: {china_info.get('name')}, tx: {tx_hash_id} checkin successful <<<<<<<<<<<<<")
     logging.info(f" ")
@@ -138,4 +144,4 @@ def checkin_all(proxy: ProxyPoolManager, trak_id: str, private_key: str, dynamic
 
 
 if __name__ == '__main__':
-    print()
+    pass

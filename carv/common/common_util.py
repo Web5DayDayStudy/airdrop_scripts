@@ -3,6 +3,9 @@
 import sys
 import os
 
+from carv.common import annotation
+from carv.common.annotation import retry
+
 curPath = os.path.dirname(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 sys.path.append(curPath)
 #########################################################
@@ -23,7 +26,8 @@ class CommonUtil:
     _data_cache = {}
 
     @staticmethod
-    def exec_tx(_from, contract, input_data, nonce, chain_id, private_key, web3):
+    @retry(max_attempts=5, delay_between_attempts=2)
+    def exec_tx(_from, contract, input_data, nonce, chain_id, private_key, web3: Web3):
         contract_address = Web3.to_checksum_address(contract)
         # 估计gas
         estimated_gas = web3.eth.estimate_gas({
@@ -51,26 +55,9 @@ class CommonUtil:
         signed_tx = web3.eth.account.sign_transaction(tx, private_key)
         # 发送交易
         tx_hash = web3.eth.send_raw_transaction(signed_tx.rawTransaction)
-        receipt = None
-        max_polling_attempts = 5
-        delay_between_attempts = 3
-        for attempt in range(max_polling_attempts):
-            try:
-                # 尝试获取交易收据
-                time.sleep(delay_between_attempts)
-                receipt = web3.eth.get_transaction_receipt(tx_hash)
-                if receipt:
-                    # 如果收据存在，则打印信息并退出循环
-                    logging.info(f"transaction receipt found in attempt {attempt + 1}")
-                    break
-            except Exception as e:
-                # 如果发生异常，则打印错误消息
-                logging.info(f"attempt {attempt + 1} failed: {e}")
-            # 如果没有找到收据，则等待指定的延迟时间
-            logging.error(f"waiting for {delay_between_attempts} seconds before next attempt...")
-            time.sleep(delay_between_attempts)
+        receipt = web3.eth.wait_for_transaction_receipt(transaction_hash=tx_hash, timeout=10)
         tx_hash_id = receipt.transactionHash.hex()
-        logging.info(f'transaction successful txId: {tx_hash_id}')
+        logging.info(f'Transaction successful with txId: {tx_hash_id}')
         return tx_hash_id
 
     """ 检查并修复input data """
@@ -118,7 +105,7 @@ class CommonUtil:
 
     @staticmethod
     def login(proxy, trak_id: str, private_key: str, chain_url: str):
-        logging.info(f'start getToken privateKey in : {private_key}')
+        logging.info(f'>>>>> 开始登录 privateKey in : {private_key}')
 
         # 获取unique_text
         time_resp = proxy.get(trak_id=trak_id, url="https://worldtimeapi.org/api/timezone/etc/UTC")
@@ -155,16 +142,15 @@ class CommonUtil:
         auth_response = proxy.post('https://interface.carv.io/protocol/login',
                                    data=json.dumps(access_token_data),
                                    headers=base_headers)
-        if auth_response.status_code in [200, 201]:
+        if auth_response.ok:
             auth_response_data = auth_response.json()
-            logging.info(f'req login successful, json : {auth_response_data}')
             if auth_response_data['code'] == 0:
                 token = auth_response_data['data']['token']
                 authorization = base64.b64encode(f"eoa:{token}".encode('utf-8')).decode('utf-8')
                 base_headers["Authorization"] = "bearer " + authorization
                 return [address, base_headers]
             else:
-                raise Exception("login fail")
+                raise Exception(f"login fail, resp: {auth_response_data}")
 
     @staticmethod
     def login_with_retry(proxy, trak_id: str = None, private_key: str = None,
@@ -210,6 +196,7 @@ class ProxyPoolManager:
         self.proxy_pool = itertools.cycle(proxy_list)
         # 存储会话
         self.sessions = {}
+        self.proxy_list = proxy_list
 
     """ 该方法会使用不同代理来发送请求 """
 
@@ -287,5 +274,4 @@ class ProxyPoolManager:
 
 
 if __name__ == '__main__':
-    print()
-# ProxyPoolManager()
+    pass
