@@ -2,6 +2,8 @@
 # 将根目录加入sys.path中,解决命令行找不到包的问题
 import sys
 import os
+from datetime import datetime
+
 
 curPath = os.path.dirname(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 sys.path.append(curPath)
@@ -17,8 +19,12 @@ from qna3.common.proxy_manager import ProxyPoolManager
 
 logging.basicConfig(level=logging.INFO)
 
+record_fail_file_path = f'./failures_{datetime.now().strftime("%Y-%m-%d")}.json'
 
-def get_base_info(proxy_manager: ProxyPoolManager, trak_id: str, private_key, invite_code: str = None):
+
+def get_base_info(proxy_manager: ProxyPoolManager = None, trak_id: str = None, private_key=None,
+                  invite_code: str = None,
+                  recaptcha: str = None):
     message = encode_defunct(text="AI + DYOR = Ultimate Answer to Unlock Web3 Universe")
     web3 = Web3(Web3.WebsocketProvider('wss://opbnb.publicnode.com'))
     account = web3.eth.account
@@ -34,6 +40,9 @@ def get_base_info(proxy_manager: ProxyPoolManager, trak_id: str, private_key, in
     # 如果有邀请码，就填充邀请码
     if invite_code:
         access_token_data['invite_code'] = invite_code
+    # 是否需要人机验证码
+    if recaptcha:
+        access_token_data["recaptcha"] = recaptcha
 
     headers = {
         'Content-Type': 'application/json; charset=utf-8',
@@ -47,9 +56,9 @@ def get_base_info(proxy_manager: ProxyPoolManager, trak_id: str, private_key, in
                                        trak_id,
                                        data=json.dumps(access_token_data),
                                        headers=headers)
-    if auth_response.status_code in [200, 201]:
+    if auth_response.ok:
         auth_response_data = auth_response.json()
-        logging.info(f'req auth successful, json : {auth_response_data}')
+        # logging.info(f'req auth successful, json : {auth_response_data}')
         access_token = auth_response_data['data']['accessToken']
         user_id = auth_response_data['data']['user']['id']
         invite_code = auth_response_data['data']['user']['invite_code']
@@ -149,11 +158,11 @@ def retry_operation_with_logging(function, **kwargs):
             retries += 1
 
     # 如果达到最大重试次数仍然失败，记录失败的 privateKey
-    logging.error(f"操作在 {max_retries} 次尝试后失败。")
+    fail_msg = f"签到操作在 {max_retries} 次尝试后失败。"
+    logging.error(fail_msg)
     if 'private_key' in kwargs:
-        log_failed_private_key(kwargs['private_key'])
+        record_failure_to_json(kwargs['private_key'], fail_msg)
     raise
-
 
 
 def log_failed_private_key(private_key):
@@ -161,3 +170,25 @@ def log_failed_private_key(private_key):
     failed_keys_file = os.path.join(current_dir, 'failed_private_keys.txt')
     with open(failed_keys_file, 'a') as file:
         file.write(f"{private_key}\n")
+
+
+def record_failure_to_json(private_key, fail_msg):
+    # 确保存储失败的目录存在
+
+    os.makedirs(os.path.dirname(record_fail_file_path), exist_ok=True)
+
+    # 确保文件存在
+    if not os.path.isfile(record_fail_file_path):
+        with open(record_fail_file_path, "w", encoding="utf-8") as f:
+            f.write('{}')  # 写入一个空的JSON对象
+
+    # 打开文件进行读写
+    with open(record_fail_file_path, "r+", encoding="utf-8") as file:
+        try:
+            data = json.load(file)
+        except json.JSONDecodeError:
+            data = {}
+        data[private_key] = fail_msg
+        file.seek(0)  # 移动到文件开头以覆盖写入
+        json.dump(data, file, indent=2, ensure_ascii=False)
+        file.truncate()  # 删除现有文件内容的剩余部分
