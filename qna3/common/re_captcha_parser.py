@@ -27,6 +27,7 @@ class ReCaptchaParser:
         self.site_key = re_captcha_config["site_key"]
         self.captcha_url = re_captcha_config["captcha_url"]
         self.api_key = re_captcha_config["api_key"]
+        self.enable = bool(re_captcha_config.getboolean("enable", fallback=False))
 
     """
         获取token reCaptcha token
@@ -34,10 +35,12 @@ class ReCaptchaParser:
     """
 
     def get_captcha_token(self, action: str):
+        if not self.enable:
+            return None
         create_task_body = {
             "clientKey": self.api_key,
             "task": {
-                "type": "ReCaptchaV3TaskProxylessS9",
+                "type": "ReCaptchaV3TaskProxyless",
                 "websiteURL": self.captcha_url,
                 "websiteKey": self.site_key,
                 "pageAction": action

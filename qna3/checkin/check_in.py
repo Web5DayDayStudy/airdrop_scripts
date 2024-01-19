@@ -36,7 +36,7 @@ def do_check_in(proxy_manager: ProxyPoolManager, captcha_parser: ReCaptchaParser
     logging.info(f'======================= start check in privateKey in : {private_key} ============================')
 
     # 获取登录的人机验证token
-    login_recaptcha = captcha_parser.get_captcha_token("login")
+    login_recaptcha = get_captcha_parser(captcha_parser)
     # step1，构造公共请求头
     web3 = Web3(Web3.WebsocketProvider('wss://opbnb.publicnode.com'))
     address, headers, _ = get_base_info(proxy_manager=proxy_manager, trak_id=trak_id,
@@ -52,17 +52,7 @@ def do_check_in(proxy_manager: ProxyPoolManager, captcha_parser: ReCaptchaParser
     nonce = web3.eth.get_transaction_count(Web3.to_checksum_address(address))
 
     # 签到的检查，需要调用validate接口
-    checkin_recaptcha = captcha_parser.get_captcha_token("checkin")
-    checkin_validate_resp = proxy_manager.post(url=f'https://api.qna3.ai/api/v2/my/validate', headers=headers,
-                                               data=json.dumps({
-                                                   "action": "checkin",
-                                                   "recaptcha": checkin_recaptcha
-                                               }))
-    if not checkin_validate_resp.ok:
-        raise Exception(f"> 请求检查签到接口失败... resp: {checkin_validate_resp.text}")
-    checkin_status_code = checkin_validate_resp.json().get("statusCode")
-    if checkin_status_code != 200:
-        raise Exception(f"> 验证签到接口失败... resp: {checkin_validate_resp.text}")
+    checkin_recaptcha = validate_checkin(captcha_parser, headers, proxy_manager)
 
     tx_hash_id = qna3_util.exec_tx(address, CONTRACT, INPUT_DATA, nonce, chain_id, private_key, web3)
     # step4. 上报得分
@@ -70,6 +60,30 @@ def do_check_in(proxy_manager: ProxyPoolManager, captcha_parser: ReCaptchaParser
                  private_key=private_key, checkin_recaptcha=checkin_recaptcha)
 
     return [address, tx_hash_id, private_key]
+
+
+def get_captcha_parser(captcha_parser):
+    login_recaptcha = None
+    if captcha_parser.enable:
+        login_recaptcha = captcha_parser.get_captcha_token("login")
+    return login_recaptcha
+
+
+def validate_checkin(captcha_parser, headers, proxy_manager):
+    checkin_recaptcha = None
+    if captcha_parser.enable:
+        checkin_recaptcha = captcha_parser.get_captcha_token("checkin")
+        checkin_validate_resp = proxy_manager.post(url=f'https://api.qna3.ai/api/v2/my/validate', headers=headers,
+                                                   data=json.dumps({
+                                                       "action": "checkin",
+                                                       "recaptcha": checkin_recaptcha
+                                                   }))
+        if not checkin_validate_resp.ok:
+            raise Exception(f"> 请求检查签到接口失败... resp: {checkin_validate_resp.text}")
+        checkin_status_code = checkin_validate_resp.json().get("statusCode")
+        if checkin_status_code != 200:
+            raise Exception(f"> 验证签到接口失败... resp: {checkin_validate_resp.text}")
+    return checkin_recaptcha
 
 
 def is_checkin(proxy_manager: ProxyPoolManager, trak_id: str, private_key: str, headers: dict) -> bool:
@@ -100,12 +114,16 @@ def is_checkin(proxy_manager: ProxyPoolManager, trak_id: str, private_key: str, 
 # 上报得分
 def report_point(proxy_manager: ProxyPoolManager, trak_id: str, headers: dict, tx_hash_id, private_key: str,
                  checkin_recaptcha: str):
-    check_sign_response = proxy_manager.post('https://api.qna3.ai/api/v2/my/check-in', trak_id, data=json.dumps({
+    body = {
         'hash': tx_hash_id,
-        'via': 'opbnb',
-        'recaptcha': checkin_recaptcha
-    }), headers=headers)
-    if check_sign_response.status_code in [200, 201]:
+        'via': 'opbnb'
+    }
+    if checkin_recaptcha:
+        body['recaptcha']: checkin_recaptcha
+
+    check_sign_response = proxy_manager.post('https://api.qna3.ai/api/v2/my/check-in', trak_id, data=json.dumps(body),
+                                             headers=headers)
+    if check_sign_response.ok:
         logging.info(f' >>>>>>>>签到成功, json : {check_sign_response.json()}')
     else:
 

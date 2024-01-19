@@ -47,8 +47,9 @@ class InviteManager:
         invite_address, _, invite_code = qna3_util.get_base_info(
             proxy_manager=self.proxy, trak_id=str(uuid.uuid4()), private_key=invite_private_key
         )
-        logging.info(
-            f">>>> 邀请人 address: {invite_address}, privateKey: {invite_private_key}, inviteCode: {invite_code}")
+
+        if invite_code is None or len(invite_code) == 0:
+            raise Exception("invite_code can't be None")
 
         # 接受邀请
         accept_private_keys = info.get("accept_private_keys")
@@ -56,6 +57,8 @@ class InviteManager:
             raise Exception("accept_private_keys can't be empty")
 
         for accept_private_key in accept_private_keys:
+            logging.info(
+                f">>>> 邀请人 address: {invite_address}, privateKey: {invite_private_key}, inviteCode: {invite_code}")
             accept_address, _, _ = qna3_util.get_base_info(
                 proxy_manager=self.proxy, trak_id=str(uuid.uuid4()), private_key=accept_private_key,
                 invite_code=invite_code

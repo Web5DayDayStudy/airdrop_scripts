@@ -1,25 +1,28 @@
-import asyncio
-import uuid
-from concurrent.futures import ThreadPoolExecutor
-
-import check_in
-import logging
 #########################################################
 # 将根目录加入sys.path中,解决命令行找不到包的问题
 import sys
 import os
-
-from qna3.common.re_captcha_parser import ReCaptchaParser
-
 curPath = os.path.dirname(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 sys.path.append(curPath)
 #########################################################
+import asyncio
+import uuid
+from concurrent.futures import ThreadPoolExecutor
+import check_in
+import logging
 from qna3.common import qna3_util
 from qna3.common.proxy_manager import ProxyPoolManager
+from configparser import ConfigParser
+from qna3.common.re_captcha_parser import ReCaptchaParser
+
 
 logging.basicConfig(level=logging.DEBUG)
 
 executor = ThreadPoolExecutor()
+
+init_config = ConfigParser()
+init_config_path = '../resources/config.ini'
+init_config.read(init_config_path, encoding='utf-8')
 
 
 async def run_blocking_io(func, *args):
@@ -49,7 +52,13 @@ async def main():
     proxy_manager = ProxyPoolManager()
     captcha_parser = ReCaptchaParser()
 
-    semaphore = asyncio.Semaphore(1)
+    async_num = 2
+    customer_async_num = init_config['checkin']['async_num']
+    if customer_async_num:
+        async_num = int(customer_async_num)
+
+    logging.info(f"> 即将开始执行签到，执行签到任务异步数量为：{async_num}")
+    semaphore = asyncio.Semaphore(async_num)
 
     # 创建并启动协程列表
     tasks = [check_in_coroutine(semaphore=semaphore, proxy_manager=proxy_manager, private_key=private_key,
@@ -59,4 +68,7 @@ async def main():
     logging.info(" ALL EXEC SUCCESSFUL !")
 
 
-asyncio.run(main())
+if __name__ == '__main__':
+    asyncio.run(main())
+
+
