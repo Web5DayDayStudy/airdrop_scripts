@@ -2,6 +2,7 @@
 # 将根目录加入sys.path中,解决命令行找不到包的问题
 import sys
 import os
+
 curPath = os.path.dirname(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 sys.path.append(curPath)
 #########################################################
@@ -14,7 +15,6 @@ from qna3.common import qna3_util
 from qna3.common.proxy_manager import ProxyPoolManager
 from configparser import ConfigParser
 from qna3.common.re_captcha_parser import ReCaptchaParser
-
 
 logging.basicConfig(level=logging.DEBUG)
 
@@ -33,16 +33,20 @@ async def run_blocking_io(func, *args):
 async def check_in_coroutine(semaphore, proxy_manager, private_key, captcha_parser):
     async with semaphore:
         trak_id = uuid.uuid4()
-        logging.info(f"executing check in private key: '{private_key}'")
-        # 在线程池中运行同步函数
-        address, tx_hash_id, new_private_key = await run_blocking_io(
-            check_in.retry_check_in, proxy_manager, captcha_parser, str(trak_id), private_key
-        )
-        logging.info(
-            "==================================== CHECK IN SUCCESS ===============================================")
-        logging.info(f'CHECK IN SUCCESSFUL, ADDRESS: {address}, PRIVATE_KEY: {private_key}, TX_HASH_ID: {tx_hash_id}')
-        logging.info(
-            "==================================== CHECK IN SUCCESS ===============================================")
+        try:
+            logging.info(f"executing check in private key: '{private_key}'")
+            # 在线程池中运行同步函数
+            address, tx_hash_id, new_private_key = await run_blocking_io(
+                check_in.retry_check_in, proxy_manager, captcha_parser, str(trak_id), private_key
+            )
+            logging.info(
+                "==================================== CHECK IN SUCCESS ===============================================")
+            logging.info(
+                f'CHECK IN SUCCESSFUL, ADDRESS: {address}, PRIVATE_KEY: {private_key}, TX_HASH_ID: {tx_hash_id}')
+            logging.info(
+                "==================================== CHECK IN SUCCESS ===============================================")
+        except Exception as e:
+            logging.error(f"> check in fail, private key is :{private_key}, exception is: {e}")
 
 
 async def main():
@@ -70,5 +74,3 @@ async def main():
 
 if __name__ == '__main__':
     asyncio.run(main())
-
-
