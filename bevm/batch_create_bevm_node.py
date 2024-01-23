@@ -47,8 +47,12 @@ def install_docker(con):
 # 启动bevm docker 容器
 @task
 def start_bevm_node(con, address):
+    # --bootnodes /ip4/18.222.166.234/tcp/10000/ws/p2p/12D3KooWR1DNEVVWMaRJVfAkXTyZAZgnN159hNcPTooCSwMv4zbx
     print("开始启动docker bevm node节点...")
-    command = f'sudo docker run -d --name "{address}" -v $HOME/node_bevm_test_storage:/root/.local/share/bevm btclayer2/bevm:v0.1.1 bevm "--chain=testnet" "--name={address}" "--pruning=archive" --telemetry-url "wss://telemetry.bevm.io/submit 0"'
+    command = (
+        f'sudo docker run -d --name "{address}" -v $HOME/node_bevm_test_storage:/root/.local/share/bevm btclayer2/bevm:v0.1.1 bevm "--chain=testnet" "--name={address}" '
+        f'"--pruning=archive" --telemetry-url "wss://telemetry.bevm.io/submit 0" --bootnodes /ip4/18.222.166.234/tcp/10000/ws/p2p/12D3KooWR1DNEVVWMaRJVfAkXTyZAZgnN159hNcPTooCSwMv4zbx')
+    print(f"启动命令为：{command}")
     con.run(command)
     print("docker容器已经启动...")
 
@@ -65,13 +69,7 @@ def getdata():
 
 
 def do_exec():
-    global address, host
-    config = ConfigParser()
-    config_file_path = './config.ini'
-    config.read(config_file_path, encoding='utf-8')
-    username = config['user_config'].get('username')
-    password = config['user_config'].get('password')
-    data = getdata()
+    data, password, username = get_infos()
     for address, host in data.items():
         con = Connection(host=host,
                          user=username,
@@ -83,10 +81,39 @@ def do_exec():
         con.close()
 
 
+def get_infos():
+    config = ConfigParser()
+    config_file_path = './config.ini'
+    config.read(config_file_path, encoding='utf-8')
+    username = config['user_config'].get('username')
+    password = config['user_config'].get('password')
+    data = getdata()
+    return data, password, username
+
+
+def do_start():
+    data, password, username = get_infos()
+    for address, host in data.items():
+        con = Connection(host=host,
+                         user=username,
+                         connect_kwargs={"password": password})
+        start_bevm_node(con, address)
+
+
+def do_showlog():
+    data, password, username = get_infos()
+    for address, host in data.items():
+        con = Connection(host=host,
+                         user=username,
+                         connect_kwargs={"password": password})
+        showlog(con, address)
+
+
+
 if __name__ == '__main__':
-    #do_exec()
-    con = Connection(host='',
-                     user='ubuntu',
-                     connect_kwargs={"": ''})
-    showlog(con, '')
+    do_exec()
+    #do_start()
+    #do_showlog()
     pass
+
+
