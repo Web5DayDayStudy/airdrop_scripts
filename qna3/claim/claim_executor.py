@@ -14,7 +14,7 @@ from qna3.common.proxy_manager import ProxyPoolManager
 logging.basicConfig(level=logging.DEBUG)
 
 
-file_path = os.path.join(curPath, 'qna3', 'resources', 'checkin_private_keys.txt')
+file_path = os.path.join(curPath, 'qna3', 'resources', 'claim_private_keys.txt')
 abs_file_path = os.path.abspath(file_path)
 private_keys = qna3_util.parse_txt_file(abs_file_path)
 

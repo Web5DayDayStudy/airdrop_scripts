@@ -19,14 +19,14 @@ def claim_point(proxy_manager: ProxyPoolManager, trak_id: str, private_key: str)
     # step1: 查询领取积分方法，查看我能领取多少分
     query_claim_point_url = "https://api.qna3.ai/api/v2/my/claim-all"
     address, headers, _ = qna3_util.get_base_info(proxy_manager, trak_id, private_key)
-    query_claim_point_response = proxy_manager.post(url=query_claim_point_url, trak_id=trak_id, headers=headers)
+    query_claim_point_response = proxy_manager.post(url=query_claim_point_url, trak_id=trak_id, headers=headers, data=json.dumps({}))
     logging.info(f'query claim point successful, json : {query_claim_point_response.json()}')
 
     nonce = None
     amount = None
     history_id = None
     signature = None
-    if query_claim_point_response.status_code in [200, 201]:
+    if query_claim_point_response.ok:
         claim_response_data = query_claim_point_response.json()
         status_code = claim_response_data['statusCode']
         if status_code == 200:
@@ -44,10 +44,10 @@ def claim_point(proxy_manager: ProxyPoolManager, trak_id: str, private_key: str)
 
     # step2：调用合约，领取积分
     # 签名数据
-    web3 = Web3(Web3.HTTPProvider('https://binance.llamarpc.com'))
+    web3 = Web3(Web3.HTTPProvider('https://bsc-mainnet.nodereal.io/v1/132d52c330424e7896bdc25a5d6ef5fc'))
     chain_id = web3.eth.chain_id
     input_data = qna3_util.check_and_reset_input_data(build_input_data(amount, nonce, signature))
-    tx_nonce = web3.eth.get_transaction_count(Web3.to_checksum_address(address))
+    tx_nonce = web3.eth.get_transaction_count(address)
     tx_id = qna3_util.exec_tx(address, CONTRACT, input_data, tx_nonce, chain_id, private_key, web3)
 
     # step3：上报合约领取积分成功
@@ -75,6 +75,16 @@ def claim_point(proxy_manager: ProxyPoolManager, trak_id: str, private_key: str)
 # 0000000000000000000000000000000000000000000000000000000000000041 - 固定(64位)
 # 9d7738b50579134ee69d7a578942dcd8bb5bd00f9d2359439bc7034d61c6c37a34f8f9d997303be9271e7b52f0953aa36dfb06c07dd44707a30c0c786f2033641c - 签名(128位)
 # 00000000000000000000000000000000000000000000000000000000000000 - 固定
+
+
+# 0x624f82f5
+# 00000000000000000000000000000000000000000000000000000000000000b3
+# 00000000000000000000000000000000000000000000000000000000001b3eba
+# 0000000000000000000000000000000000000000000000000000000000000060
+# 0000000000000000000000000000000000000000000000000000000000000041
+# eca77245f8b48b9d21ae304f6784e31b4107ce504be3d234d247fee4afb04274528ce93747c43c23aac0535bb347848ff8b45bf17983db28188e21b0c7f749231b
+# 00000000000000000000000000000000000000000000000000000000000000
+
 def build_input_data(amount, nonce, signature):
     return (f"0x624f82f5{f'{hex(amount)[2:].zfill(64)}'}"
             f"{f'{hex(nonce)[2:].zfill(64)}'}"

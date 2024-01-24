@@ -125,8 +125,9 @@ def report_point(proxy_manager: ProxyPoolManager, trak_id: str, headers: dict, t
                                              headers=headers)
     if check_sign_response.ok:
         logging.info(f' >>>>>>>>签到成功, json : {check_sign_response.json()}')
+    elif check_sign_response.status_code == 409 and 'already checked' in check_sign_response.json().get('message'):
+        logging.info(f' >>>>>>>>签到成功, json : {check_sign_response.json()}')
     else:
-
         fail_msg = f' >>>>>>>> 签到失败, trak_id: {trak_id}, private_key:{private_key} response : {check_sign_response.json()}'
         logging.error(fail_msg)
         qna3_util.record_failure_to_json(private_key=private_key, fail_msg=fail_msg)
