@@ -47,11 +47,14 @@ def do_check_in(proxy_manager: ProxyPoolManager, captcha_parser: ReCaptchaParser
     if checked:
         return address, "", private_key
 
+    # 签到之前需要先调用验证接口(签到前置检查)
+    checkin_verify(headers, proxy_manager)
+
     # step3. 交互合约签到，返回txId
     chain_id = web3.eth.chain_id
     nonce = web3.eth.get_transaction_count(Web3.to_checksum_address(address))
 
-    # 签到的检查，需要调用validate接口
+    # 签到的检查，需要调用validate接口(谷歌图形验证)
     checkin_recaptcha = validate_checkin(captcha_parser, headers, proxy_manager)
 
     tx_hash_id = qna3_util.exec_tx(address, CONTRACT, INPUT_DATA, nonce, chain_id, private_key, web3)
@@ -60,6 +63,15 @@ def do_check_in(proxy_manager: ProxyPoolManager, captcha_parser: ReCaptchaParser
                  private_key=private_key, checkin_recaptcha=checkin_recaptcha)
 
     return [address, tx_hash_id, private_key]
+
+
+def checkin_verify(headers, proxy_manager):
+    checkin_verify_resp = proxy_manager.post(url='https://api.qna3.ai/api/v2/my/check-in/verify', headers=headers,
+                                             data=json.dumps({"via": "opbnb"}))
+    if not checkin_verify_resp.ok or checkin_verify_resp.json()['data']['action'] != 'passed':
+        err_msg = f'> 调用 check-in verify 接口失败..., resp: {checkin_verify_resp.json()}'
+        logging.error(err_msg)
+        raise Exception(err_msg)
 
 
 def get_captcha_parser(captcha_parser):
@@ -126,6 +138,8 @@ def report_point(proxy_manager: ProxyPoolManager, trak_id: str, headers: dict, t
     if check_sign_response.ok:
         logging.info(f' >>>>>>>>签到成功, json : {check_sign_response.json()}')
     elif check_sign_response.status_code == 409 and 'already checked' in check_sign_response.json().get('message'):
+        logging.info(f' >>>>>>>>签到成功, json : {check_sign_response.json()}')
+    elif check_sign_response.status_code == 422 and 'already checked' in check_sign_response.json().get('message'):
         logging.info(f' >>>>>>>>签到成功, json : {check_sign_response.json()}')
     else:
         fail_msg = f' >>>>>>>> 签到失败, trak_id: {trak_id}, private_key:{private_key} response : {check_sign_response.json()}'
